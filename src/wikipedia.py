@@ -46,6 +46,12 @@ class SectionHit:
 
 
 class WikipediaHybridSectionRetriever:
+    _SKIP_SECTIONS = {
+        "references", "see also", "external links", "further reading",
+        "bibliography", "notes", "footnotes", "notes and references",
+        "citations", "sources", "gallery", "awards", "discography", "filmography",
+    }
+
     def __init__(
         self,
         emb_model_name: str = "sentence-transformers/multi-qa-MiniLM-L6-cos-v1",
@@ -62,20 +68,18 @@ class WikipediaHybridSectionRetriever:
         self.sess = session or requests.Session()
 
         self.embedder = SentenceTransformer(emb_model_name)
-
-        # 1. Automatically grab the model's native max sequence length
         self.max_passage_tokens = self.embedder.max_seq_length
         self.tok = self.embedder.tokenizer
-
-        # 2. Calculate special tokens BEFORE overriding the max length
+        # Must be computed before overriding model_max_length below
         self.num_special_tokens = len(self.tok.encode("", add_special_tokens=True))
-
-        # 3. Silence the tokenizer length warning. We handle max length manually.
+        # Suppress tokenizer length warnings; chunking enforces the limit manually
         self.tok.model_max_length = int(1e9)
 
         self.chunk_overlap = chunk_overlap
         self.bm25_weight = bm25_weight
         self.dense_weight = dense_weight
+
+    # ------------------- Public API -------------------
 
     def retrieve(
         self,
@@ -84,28 +88,10 @@ class WikipediaHybridSectionRetriever:
         page_limit: int = 7,
         section_limit_per_page: int = 15,
     ) -> List[SectionHit]:
+        """search → fetch → split → clean → filter → chunk → score → top-k"""
         pages = self._search_pages(query, limit=page_limit)
         if not pages:
             return []
-
-        # The blacklist of sections that contain zero explanatory value
-        # Use lowercase for the blacklist
-        bad_sections = {
-            "references",
-            "see also",
-            "external links",
-            "further reading",
-            "bibliography",
-            "notes",
-            "footnotes",
-            "notes and references",
-            "citations",
-            "sources",
-            "gallery",
-            "awards",
-            "discography",
-            "filmography",
-        }
 
         sections: List[SectionHit] = []
         for p in pages:
@@ -115,10 +101,8 @@ class WikipediaHybridSectionRetriever:
             secs = self._split_html_into_sections(html_blob)[:section_limit_per_page]
 
             for sec_title, sec_html in secs:
-                # FIX: Force lowercase and strip to guarantee a match
-                if sec_title.strip().lower() in bad_sections:
+                if sec_title.strip().lower() in self._SKIP_SECTIONS:
                     continue
-
                 text = self._html_to_text(sec_html)
                 if len(text.strip()) >= 50:
                     sections.append(
@@ -135,17 +119,13 @@ class WikipediaHybridSectionRetriever:
     # ------------------- Wikipedia API -------------------
 
     def _get_with_retry(self, params: Dict[str, Any], max_retries: int = 5) -> Dict[str, Any]:
-        """
-        Executes a GET request with Exponential Backoff specifically for 429 and 5xx errors.
-        """
-        base_delay = 1.0  # Start with 1 second
+        base_delay = 1.0
 
         for attempt in range(max_retries):
             try:
                 r = self.sess.get(self.api, params=params, headers=self.headers, timeout=20)
 
                 if r.status_code == 429:
-                    # Exponential backoff: 1s, 2s, 4s, 8s... plus jitter
                     delay = (base_delay * (2**attempt)) + random.uniform(0, 1)
                     print(f"Rate limited (429). Retrying in {delay:.2f}s...")
                     time.sleep(delay)
@@ -172,46 +152,34 @@ class WikipediaHybridSectionRetriever:
         data = self._get_with_retry(params)
         return data.get("parse", {}).get("text", {}).get("*", "")
 
-    # ------------------- Section splitting -------------------
+    # ------------------- HTML → sections -------------------
 
     def _split_html_into_sections(self, page_html: str) -> List[tuple[str, str]]:
-        """
-        Split full page HTML into sections using heading tags.
-        Returns list of (section_title, section_html).
-        Includes a 'Lead' section (content before first heading).
-        """
-        # headings look like: <h2>...<span class="mw-headline" id="...">Title</span>...</h2>
+        """Returns (title, body_html) pairs. Content before the first heading is labelled 'Lead'."""
         heading_re = re.compile(r"(?is)<h[2-6][^>]*>.*?</h[2-6]>")
         headings = list(heading_re.finditer(page_html))
 
         if not headings:
             return [("Lead", page_html)]
 
-        out: List[tuple[str, str]] = []
-
-        # Lead
-        lead_html = page_html[: headings[0].start()]
-        out.append(("Lead", lead_html))
+        out: List[tuple[str, str]] = [("Lead", page_html[: headings[0].start()])]
 
         for i, m in enumerate(headings):
-            start = m.start()
             end = headings[i + 1].start() if i + 1 < len(headings) else len(page_html)
-            h_html = m.group(0)
-            title = self._heading_text(h_html) or f"Section {i + 1}"
+            title = self._heading_text(m.group(0)) or f"Section {i + 1}"
             out.append((title, page_html[m.end() : end]))
 
         return out
 
     def _heading_text(self, heading_html: str) -> str:
-        # extract visible heading text; simple and robust enough
         s = re.sub(r"(?is)<.*?>", " ", heading_html)
         s = html.unescape(s)
-        s = re.sub(r"\s+", " ", s).strip()
-        return s
+        return re.sub(r"\s+", " ", s).strip()
 
     # ------------------- Scoring -------------------
 
     def _score_sections(self, query: str, sections: List[SectionHit]) -> None:
+        # Flatten all chunks, tracking which section each chunk belongs to
         chunk_texts: List[str] = []
         chunk_to_sec: List[int] = []
 
@@ -223,10 +191,11 @@ class WikipediaHybridSectionRetriever:
         bm25 = BM25Okapi([self._bm25_tokens(t) for t in chunk_texts])
         bm25_scores = bm25.get_scores(self._bm25_tokens(query)).astype(np.float32)
 
-        q = self.embedder.encode([query], normalize_embeddings=True)[0]
-        X = self.embedder.encode(chunk_texts, normalize_embeddings=True)
-        dense_scores = (X @ q).astype(np.float32)
+        q_vec = self.embedder.encode([query], normalize_embeddings=True)[0]
+        chunk_vecs = self.embedder.encode(chunk_texts, normalize_embeddings=True)
+        dense_scores = (chunk_vecs @ q_vec).astype(np.float32)
 
+        # Section score = max over its chunks; best-matching chunk is stored for display
         sec_bm25 = np.full(len(sections), -np.inf, dtype=np.float32)
         sec_dense = np.full(len(sections), -np.inf, dtype=np.float32)
         best_chunk_idx = np.full(len(sections), -1, dtype=np.int32)
@@ -253,14 +222,14 @@ class WikipediaHybridSectionRetriever:
     # ------------------- Chunking -------------------
 
     def _chunk_text(self, text: str) -> List[str]:
-        # Reserve 3 extra tokens as a safety margin: character-offset slicing at subword
-        # boundaries can cause a fragment to re-tokenize into 1-2 more tokens than expected.
+        # -3 safety margin: character-offset slicing at subword boundaries can expand
+        # by 1-2 tokens when the fragment is re-tokenised with special tokens added
         effective_max = self.max_passage_tokens - self.num_special_tokens - 3
         return self._split_by_tokens(text.strip(), effective_max, self.chunk_overlap) or [""]
 
     def _split_by_tokens(self, text: str, max_tokens: int, overlap: int) -> List[str]:
-        """Split text into token-bounded chunks using character offsets to avoid
-        case corruption from decoding uncased tokenizers."""
+        # Slice the original text by character offsets rather than decoding token ids —
+        # decoding an uncased tokeniser corrupts capitalisation
         encoding = self.tok(text, add_special_tokens=False, return_offsets_mapping=True)
         ids = encoding["input_ids"]
         offsets = encoding["offset_mapping"]
@@ -272,9 +241,7 @@ class WikipediaHybridSectionRetriever:
         chunks = []
         for start in range(0, len(ids), step):
             end = min(start + max_tokens, len(ids))
-            char_start = offsets[start][0]
-            char_end = offsets[end - 1][1]
-            chunk = text[char_start:char_end].strip()
+            chunk = text[offsets[start][0] : offsets[end - 1][1]].strip()
             if chunk:
                 chunks.append(chunk)
             if end >= len(ids):
@@ -299,20 +266,16 @@ class WikipediaHybridSectionRetriever:
     def _html_to_text(self, s: str) -> str:
         soup = BeautifulSoup(s, "html.parser")
 
-        # FIX 1 & 2: Added 'hatnote' (redirects) and 'thumb' / 'figure' (image captions)
         bad_classes = re.compile(
             r"(navbox|infobox|sidebar|metadata|mw-editsection|reference|noprint|hatnote|thumb|figure|image)"
         )
         for tag in soup.find_all(class_=bad_classes):
             tag.decompose()
-
         for tag in soup.find_all(role="navigation"):
             tag.decompose()
-
         for tag in soup.find_all(["script", "style"]):
             tag.decompose()
 
-        # Extract LaTeX from <math> tags
         for math_tag in soup.find_all("math"):
             annotation = math_tag.find("annotation", encoding=re.compile(r"tex", re.I))
             if annotation:
@@ -323,41 +286,21 @@ class WikipediaHybridSectionRetriever:
                 else:
                     math_tag.replace_with(f" ${latex}$ ")
 
-        # Add structural newlines ONLY to block-level elements
-        block_tags = ["p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "tr"]
-        for tag in soup.find_all(block_tags):
+        for tag in soup.find_all(["p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "tr"]):
             tag.append("\n")
-
         for tag in soup.find_all("br"):
             tag.replace_with("\n")
 
-        # Extract text normally
-        text = soup.get_text()
+        text = html.unescape(soup.get_text())
+        text = text.replace("\u2060", "")  # Wikipedia inserts zero-width joiners
 
-        # Final whitespace normalization
-        text = html.unescape(text)
-
-        # FIX 3: Eradicate Wikipedia's invisible zero-width joiners
-        text = text.replace("\u2060", "")
-
-        # Strip citation numbers like [1], [2], [note 3], etc.
         text = re.sub(r"\[\d+\]", "", text)
         text = re.sub(r"\[note \d+\]", "", text)
         text = re.sub(r"\[citation needed\]", "", text, flags=re.IGNORECASE)
-
-        # Strip lone digit lines (citation artifacts)
-        text = re.sub(r"(?m)^\d+\s*$", "", text)
-
-        # Strip "v t e" navigation box artifacts
-        text = re.sub(r"\bv\s+t\s+e\b", "", text)
-
-        # Strip standalone edit-tool artifact lines
+        text = re.sub(r"(?m)^\d+\s*$", "", text)           # lone citation digit lines
+        text = re.sub(r"\bv\s+t\s+e\b", "", text)          # navbox artifact
         text = re.sub(r"(?m)^(read|edit|view history|talk|contributions)\s*$", "", text, flags=re.IGNORECASE)
-
-        # Strip coordinate templates (e.g. "Coordinates: 51°N 0°W")
         text = re.sub(r"Coordinates:.*?(?=\n|$)", "", text)
-
-        # Strip edit-section link text artifacts (e.g. "[edit]", "[ edit ]")
         text = re.sub(r"\[\s*edit\s*\]", "", text, flags=re.IGNORECASE)
 
         text = re.sub(r"[ \t\f\v]+", " ", text)
