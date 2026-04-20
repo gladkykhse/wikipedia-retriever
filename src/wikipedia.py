@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import html
+import random
 import re
 import time
-import random
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -47,9 +47,20 @@ class SectionHit:
 
 class WikipediaHybridSectionRetriever:
     _SKIP_SECTIONS = {
-        "references", "see also", "external links", "further reading",
-        "bibliography", "notes", "footnotes", "notes and references",
-        "citations", "sources", "gallery", "awards", "discography", "filmography",
+        "references",
+        "see also",
+        "external links",
+        "further reading",
+        "bibliography",
+        "notes",
+        "footnotes",
+        "notes and references",
+        "citations",
+        "sources",
+        "gallery",
+        "awards",
+        "discography",
+        "filmography",
     }
 
     def __init__(
@@ -297,8 +308,8 @@ class WikipediaHybridSectionRetriever:
         text = re.sub(r"\[\d+\]", "", text)
         text = re.sub(r"\[note \d+\]", "", text)
         text = re.sub(r"\[citation needed\]", "", text, flags=re.IGNORECASE)
-        text = re.sub(r"(?m)^\d+\s*$", "", text)           # lone citation digit lines
-        text = re.sub(r"\bv\s+t\s+e\b", "", text)          # navbox artifact
+        text = re.sub(r"(?m)^\d+\s*$", "", text)  # lone citation digit lines
+        text = re.sub(r"\bv\s+t\s+e\b", "", text)  # navbox artifact
         text = re.sub(r"(?m)^(read|edit|view history|talk|contributions)\s*$", "", text, flags=re.IGNORECASE)
         text = re.sub(r"Coordinates:.*?(?=\n|$)", "", text)
         text = re.sub(r"\[\s*edit\s*\]", "", text, flags=re.IGNORECASE)
