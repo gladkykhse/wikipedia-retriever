@@ -213,3 +213,6 @@ __marimo__/
 # Claude Code
 CLAUDE.md
 .claude/
+
+# Host-specific deployment glue (monitoring / nginx / log dir setup)
+deploy/
