@@ -1,0 +1,176 @@
+Series circuit current division
+Electric current distribution in series circuits
+Kirchhoff's laws for series circuits
+Current behavior in series electrical circuits
+Current distribution in electrical circuits
+Joule's law and current flow
+Kirchhoff's laws for circuit analysis
+Resistive and conductive properties of wires
+Parallel circuit current distribution
+Kirchhoff's laws parallel circuits
+Current division in parallel circuits
+Branch currents in parallel circuit analysis
+Electric current conservation in circuits
+Series circuit current properties
+Electric charge continuity equation
+Current distribution in conductors
+Electric field between parallel plates
+Electrostatic field variation with distance
+Electric field between charged parallel plates
+Field lines between oppositely charged plates
+additive color mixing theory
+human color vision physics
+light color perception wikipedia
+color additive model physics
+dispersion of light in optics
+relationship between wavelength and refractive index
+optical dispersion theory
+color dispersion in prisms
+Snell's law refraction
+total internal reflection apparent shift
+optics refraction from air to denser medium
+apparent displacement of image due to refraction
+additive color model physics
+color perception human vision
+light wavelength color production
+color mixing theory
+laws of reflection optics
+wave-particle duality electromagnetic waves
+reflection of light smooth surface physics
+optical wave propagation principles
+Newton's second law of motion
+acceleration due to gravity formula
+net force on an object under constant acceleration
+classical mechanics force and motion
+Hooke's Law definition
+proportionality in mechanical systems
+elasticity and displacement relationship
+spring constant and force relationship
+acceleration due to tension and gravity
+classical mechanics tension and gravity
+acceleration in a non-inertial reference frame
+tension and gravity force on an object
+Hydraulic system limitations
+Fluid dynamics pressure force relationship
+Pascal's principle applications
+Hydraulic press system constraints
+hydrostatic pressure and cross-sectional area relationship
+fluid column height and tube area relationship
+barometer fluid dynamics principles
+hydrostatic equilibrium and tube geometry
+specific heat capacity definition
+relationship between specific heat capacity and cooling rate
+thermal properties of materials
+specific heat capacity and heat transfer
+Thermal equilibrium in thermodynamic systems
+Heat transfer laws and formulas
+Temperature change when mixing substances at different temperatures
+Thermodynamics of heat transfer and temperature equilibrium
+Projectile motion horizontal velocity constant acceleration
+Kinematics velocity time relationship
+Effect of gravity on projectile motion
+Horizontal motion under constant acceleration formula
+Newton's second law of motion
+Relationship between force and acceleration
+Inertia and force interaction
+Newton's laws of motion and object interaction
+Effects of black hole on orbiting planet
+Tidal forces in general relativity
+Gravitational pull of black holes on smaller objects
+Event horizon and gravitational influence
+Effects of ionizing radiation on materials
+Radioactivity induced by gamma radiation
+Ionizing radiation and food spoilage
+Radiation exposure and material properties
+Resultant force vector addition
+Conditions for forces to cancel each other out
+Vector addition in statics
+Resultant force in mechanics
+Reference vector in circuit analysis
+Parallel RC circuit analysis
+Circuit analysis reference frame
+Vector representation in electrical circuits
+parallel circuit current balance
+Kirchhoff's laws electric circuits
+bleeder circuit definition
+current balance in parallel circuits theory
+Parallel vs series electrical circuits characteristics
+Circuit operation in parallel and series configurations
+Kirchhoff's laws and circuit analysis
+Ohm's law and circuit behavior
+Advantages and disadvantages of alternating current
+Characteristics of direct current in electric circuits
+Comparison of AC and DC power transmission
+Properties of AC and DC in electrical engineering
+Conductors and insulators electric charge behavior
+Conditions for electric current flow in materials
+Relationship between electric potential and electric field
+Static electricity and electric current coexistence principles
+Harmonics in sound waves definition
+Properties of sound wave harmonics
+Relationship between harmonics and fundamental frequency
+Types of sound wave harmonics
+Sound properties Wikipedia
+Music theory notes and tones Wikipedia
+Acoustic perception Wikipedia
+Sound quality and pitch Wikipedia
+Types of seismic waves Wikipedia
+Seismic wave characteristics Wikipedia
+Similarity between seismic and sound waves physics Wikipedia
+Seismic wave propagation Wikipedia
+Einstein's thought experiment on light and energy
+Photoelectric effect and special relativity
+Einstein's theory of light speed and space time
+Quantum mechanics and energy principles of Einstein
+Effect of electric field on electromagnetic waves
+Interaction between electric field and light
+Electric field influence on charged particle motion
+Electromagnetic wave behavior in electric field
+specific heat capacity definition
+specific heat capacity of metals
+specific heat capacity of water
+thermal properties of materials comparison
+Carnot cycle efficiency
+Second Law of Thermodynamics heat engines
+Perfect heat engine thermodynamics
+Entropy and heat engine efficiency
+Applications of pendulums in physics
+Oscillations in mechanical systems
+Energy conversion in pendulum systems
+Pendulum uses in engineering and technology
+Pendulum motion in fluid environments
+Factors affecting pendulum timekeeping accuracy
+Effect of gravity on pendulum oscillations
+Mechanical timekeeping devices in marine environments
+History of Newton's laws of motion
+Development of Newton's first law
+Newton's discovery of inertia
+Historical context of Newton's laws of motion
+Archimedes' Principle and relative density
+Fluid mechanics and buoyancy force
+Density and buoyancy relationship
+Buoyancy and fluid density
+Types of planetary orbits in astronomy
+Scientists who contributed to understanding of elliptical orbits
+History of celestial mechanics and planetary motion
+Astronomers who studied planetary motion in the 16th and 17th centuries
+types of ionizing radiation and their interaction with matter
+aluminum radiation shielding properties
+nuclear radiation absorption by metals
+radiation types affected by atomic number and electron configuration
+crystal structure physics
+lattice vibrations solid state physics
+crystal properties physics
+phonon dispersion relation
+Fluid dynamics impact behavior
+Projectile penetration and reflection
+Critical angle for reflection in fluids
+Surface tension and viscosity effects on impact
+Sound wave properties and behavior
+Resonance in acoustics
+Interference patterns in sound waves
+Frequency components of sound waves
+Isotopes atomic number mass number
+Radioactive decay nuclear stability
+Nuclear physics atomic structure
+Isotopes properties nuclear physics
