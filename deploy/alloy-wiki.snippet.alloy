@@ -1,0 +1,48 @@
+// --- WIKIPEDIA RETRIEVER SECTION ---
+// Append the blocks below to /opt/monitoring/alloy/config.alloy
+// (Alloy already mounts /var/log as /var/log/host_logs, so no compose change
+// is required — just reload Alloy after editing.)
+
+local.file_match "wiki_retriever" {
+  path_targets = [{
+    "__path__" = "/var/log/host_logs/wiki/app.log",
+    "job"      = "wiki-retriever",
+    "instance" = "kron-mini-k1",
+  }]
+}
+
+loki.source.file "wiki_retriever" {
+  targets    = local.file_match.wiki_retriever.targets
+  forward_to = [loki.process.wiki_retriever.receiver]
+}
+
+loki.process "wiki_retriever" {
+  // Parse the JSON log record produced by python-json-logger.
+  stage.json {
+    expressions = {
+      "level"      = "level",
+      "logger"     = "logger",
+      "request_id" = "request_id",
+      "path"       = "path",
+      "status"     = "status",
+      "msg"        = "message",
+    }
+  }
+
+  // Keep 'level' as a label (low cardinality). Everything else goes to
+  // structured metadata to avoid cardinality explosions.
+  stage.labels {
+    values = { level = "level" }
+  }
+
+  stage.structured_metadata {
+    values = {
+      logger     = "logger",
+      request_id = "request_id",
+      path       = "path",
+      status     = "status",
+    }
+  }
+
+  forward_to = [loki.write.local_loki.receiver]
+}

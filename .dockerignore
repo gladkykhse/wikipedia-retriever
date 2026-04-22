@@ -1,0 +1,24 @@
+.git
+.gitignore
+.github
+.venv
+.ruff_cache
+.pytest_cache
+.mypy_cache
+__pycache__
+*.py[cod]
+*.egg-info
+.python-version
+.env
+.env.*
+!.env.example
+.claude
+CLAUDE.md
+# README.md is required by pyproject.toml metadata — do NOT exclude.
+queries.txt
+scripts
+tests
+deploy
+docker-compose.yml
+Dockerfile
+.dockerignore

@@ -1,14 +1,45 @@
 [project]
 name = "wikipedia-retriever"
 version = "0.1.0"
-description = "Add your description here"
+description = "Hybrid BM25 + dense section-level Wikipedia retriever exposed over HTTP."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "beautifulsoup4>=4.14.3",
+    "fastapi>=0.115",
+    "httpx[http2]>=0.28",
     "nltk>=3.9.4",
     "numpy>=2.4.4",
+    "prometheus-client>=0.21",
+    "pydantic-settings>=2.6",
+    "python-json-logger>=2.0",
+    "python-ulid>=2.0",
     "rank-bm25>=0.2.2",
-    "requests>=2.33.1",
     "sentence-transformers>=5.4.1",
+    "torch>=2.6",
+    "uvicorn[standard]>=0.32",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+# CPU-only torch (this host has no GPU). Without this, the default PyPI wheels
+# pull in ~6 GB of NVIDIA CUDA libraries we cannot use.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
