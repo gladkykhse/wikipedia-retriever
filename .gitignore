@@ -209,3 +209,7 @@ __marimo__/
 # Editors
 .idea/
 .vscode/
+
+# Claude Code
+CLAUDE.md
+.claude/
