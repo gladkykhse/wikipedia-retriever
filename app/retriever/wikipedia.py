@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 import html
 import random
@@ -90,7 +88,7 @@ class WikipediaHybridSectionRetriever:
         self.lang = lang
         self.api = f"https://{lang}.wikipedia.org/w/api.php"
         self.headers = {
-            "User-Agent": f"{user_agent} (gladkykh.sviatoslav@gmail.com; AI Research Bot)",
+            "User-Agent": user_agent,
         }
         self._owns_client = client is None
         self.client = client or httpx.AsyncClient(
@@ -154,14 +152,19 @@ class WikipediaHybridSectionRetriever:
         async def _fetch_one(pageid: int, title: str) -> None:
             html_blob = await self._fetch_page_html(title)
             url = f"https://{self.lang}.wikipedia.org/?curid={pageid}"
-            secs_raw = self._split_html_into_sections(html_blob)[:section_limit_per_page]
-            sections: list[tuple[str, str]] = []
-            for sec_title, sec_html in secs_raw:
-                if sec_title.strip().lower() in self._SKIP_SECTIONS:
-                    continue
-                text = self._html_to_text(sec_html)
-                if len(text.strip()) >= 50:
-                    sections.append((sec_title, text))
+
+            def _parse() -> list[tuple[str, str]]:
+                secs_raw = self._split_html_into_sections(html_blob)[:section_limit_per_page]
+                sections: list[tuple[str, str]] = []
+                for sec_title, sec_html in secs_raw:
+                    if sec_title.strip().lower() in self._SKIP_SECTIONS:
+                        continue
+                    text = self._html_to_text(sec_html)
+                    if len(text.strip()) >= 50:
+                        sections.append((sec_title, text))
+                return sections
+
+            sections = await asyncio.to_thread(_parse)
             page_cache[pageid] = _PageSections(
                 title=title, pageid=pageid, url=url, sections=sections
             )

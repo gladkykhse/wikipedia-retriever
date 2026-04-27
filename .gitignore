@@ -216,3 +216,4 @@ CLAUDE.md
 
 # Host-specific deployment glue (monitoring / nginx / log dir setup)
 deploy/
+docker-compose.yml

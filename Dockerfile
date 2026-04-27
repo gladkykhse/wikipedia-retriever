@@ -18,11 +18,11 @@ WORKDIR /app
 # Install deps first (separate layer for better caching on code-only changes).
 COPY pyproject.toml uv.lock README.md ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project
+    uv sync --frozen --no-group tools --no-install-project
 
 COPY app ./app
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --frozen --no-group tools
 
 # ---------------- model-fetch stage ----------------
 # Pre-downloads the embedding model and NLTK corpora so the runtime container
@@ -51,13 +51,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     TRANSFORMERS_OFFLINE=1 \
     HF_HUB_OFFLINE=1 \
     NLTK_DATA=/nltk_data \
-    TOKENIZERS_PARALLELISM=false \
-    OMP_NUM_THREADS=2 \
-    MKL_NUM_THREADS=2
+    TOKENIZERS_PARALLELISM=true \
+    PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus
 
 RUN useradd --system --uid 10001 --home /home/app --create-home app && \
-    mkdir -p /app /var/log/wiki && \
-    chown -R app:app /app /var/log/wiki /home/app
+    mkdir -p /app && \
+    chown -R app:app /app /home/app
 
 WORKDIR /app
 
@@ -73,7 +72,8 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD python -c "import urllib.request,sys; urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=3).read(); sys.exit(0)" || exit 1
 
-CMD ["uvicorn", "app.main:app", \
-     "--host", "0.0.0.0", "--port", "8000", \
-     "--loop", "uvloop", "--http", "httptools", \
-     "--timeout-graceful-shutdown", "20"]
+CMD ["sh", "-c", "mkdir -p ${PROMETHEUS_MULTIPROC_DIR} && uvicorn app.main:app \
+     --host 0.0.0.0 --port 8000 \
+     --loop uvloop --http httptools \
+     --timeout-graceful-shutdown 20 \
+     --workers ${RETRIEVER_WORKERS:-1}"]

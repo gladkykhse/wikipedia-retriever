@@ -1,13 +1,3 @@
-"""Query the /retrieve API and pretty-print results.
-
-Usage:
-    uv run python scripts/query.py "Battle of Thermopylae" "Roman Empire"
-    uv run python scripts/query.py "black holes" --k 3 --page-limit 5
-    uv run python scripts/query.py "gravity" --url http://localhost:8000
-"""
-
-from __future__ import annotations
-
 import argparse
 import os
 import sys
@@ -28,7 +18,7 @@ def print_hit(i: int, hit: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("queries", nargs="+", help="One or more search queries")
-    parser.add_argument("--url", default=os.getenv("RETRIEVER_URL", "https://wiki.sgcore.dev"))
+    parser.add_argument("--url", default=os.getenv("RETRIEVER_URL", "http://127.0.0.1:8000"))
     parser.add_argument("--token", default=os.getenv("RETRIEVER_API_TOKEN"), help="Bearer token")
     parser.add_argument("--k", type=int, default=5, help="Results per query (default: 5)")
     parser.add_argument("--page-limit", type=int, default=7, help="Wikipedia pages to search (default: 7)")

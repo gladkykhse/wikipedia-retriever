@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import hmac
 
 from fastapi import Depends, HTTPException, Request, status

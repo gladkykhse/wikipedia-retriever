@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import logging.handlers
 import sys
@@ -37,9 +35,10 @@ def configure_logging(level: str = "INFO", log_file: Optional[Path] = None) -> N
 
     if log_file is not None:
         log_file.parent.mkdir(parents=True, exist_ok=True)
-        fh = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=50 * 1024 * 1024, backupCount=5, encoding="utf-8"
-        )
+        # WatchedFileHandler re-opens the file when its inode changes, so external
+        # log rotation (logrotate / Alloy) works correctly across multiple workers.
+        # RotatingFileHandler is not safe for multi-process use.
+        fh = logging.handlers.WatchedFileHandler(log_file, encoding="utf-8")
         fh.setFormatter(fmt)
         fh.addFilter(ctx_filter)
         handlers.append(fh)

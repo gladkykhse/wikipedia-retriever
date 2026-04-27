@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
@@ -23,7 +21,7 @@ class Settings(BaseSettings):
     log_file: Optional[Path] = None
 
     embedding_model: str = "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
-    user_agent: str = "WikipediaHybridSectionRetriever"
+    user_agent: str = "WikipediaHybridSectionRetriever/0.1.0"
     http_concurrency: int = 8
     lang: str = "en"
 

@@ -1,12 +1,10 @@
-from __future__ import annotations
-
 import logging
 import time
 from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI, Request, Response
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest, multiprocess
 from ulid import ULID
 
 from app.api.routes import router as api_router
@@ -29,12 +27,12 @@ async def lifespan(app: FastAPI):
     log.info("startup_begin", extra={"embedding_model": settings.embedding_model})
 
     headers = {
-        "User-Agent": f"{settings.user_agent} (gladkykh.sviatoslav@gmail.com; AI Research Bot)",
+        "User-Agent": settings.user_agent,
     }
     client = httpx.AsyncClient(
         timeout=20.0,
         http2=True,
-        limits=httpx.Limits(max_connections=16, max_keepalive_connections=8),
+        limits=httpx.Limits(max_connections=64, max_keepalive_connections=32),
         headers=headers,
     )
     retriever = WikipediaHybridSectionRetriever(
@@ -94,7 +92,9 @@ app.add_middleware(PrometheusMiddleware)
 
 @app.get("/metrics", include_in_schema=False)
 def metrics() -> Response:
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+    registry = CollectorRegistry()
+    multiprocess.MultiProcessCollector(registry)
+    return Response(generate_latest(registry), media_type=CONTENT_TYPE_LATEST)
 
 
 app.include_router(api_router)

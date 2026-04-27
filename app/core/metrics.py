@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import time
 
 from prometheus_client import Counter, Histogram

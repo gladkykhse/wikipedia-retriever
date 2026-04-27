@@ -1,13 +1,3 @@
-"""Latency benchmark for WikipediaHybridSectionRetriever.
-
-Usage:
-    uv run python scripts/bench.py --sample 30 --mode single
-    uv run python scripts/bench.py --sample 30 --mode batch
-    uv run python scripts/bench.py --sample 30 --mode both
-"""
-
-from __future__ import annotations
-
 import argparse
 import asyncio
 import random
